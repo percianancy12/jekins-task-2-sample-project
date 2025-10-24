@@ -1,0 +1,47 @@
+pipeline {
+  agent any
+
+  environment {
+    DEPLOY_DIR = '/var/www/html'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        git branch: 'main', url: 'https://github.com/percianancy12/jekins-task-2-sample-project.git'
+      }
+    }
+
+    stage('Validate Files') {
+      steps {
+        sh '''
+          echo "Checking HTML and JS..."
+          grep -q "Hello, world!" index.html && echo "HTML OK" || echo "HTML Missing"
+          grep -q "showMessage" script.js && echo "JS OK" || echo "JS Missing"
+        '''
+      }
+    }
+
+    stage('Deploy') {
+      steps {
+        sh '''
+          echo "Deploying files to $DEPLOY_DIR..."
+          cp index.html $DEPLOY_DIR/
+          cp script.js $DEPLOY_DIR/
+          echo "Deployment complete."
+        '''
+      }
+    }
+
+    stage('Notify') {
+      steps {
+        mail to: 'percianancy@gmail.com',
+             subject: "Jenkins Build #${BUILD_NUMBER} Completed",
+             body: """\
+Your HTML/JS project build has finished and has been deployed to the server.
+             View the build: ${BUILD_URL}
+"""
+      }
+    }
+  }
+}
